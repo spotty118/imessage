@@ -8,7 +8,7 @@ variables:
     libheif/libheif.1.dylib
     aom/libaom.3.dylib
     libvmaf/libvmaf.1.dylib
-    jpeg-xl/libxjl.0.6.dylib
+    jpeg-xl/libjxl.0.6.dylib
     libde265/libde265.0.dylib
     x265/libx265.199.dylib
 
@@ -131,7 +131,7 @@ build universal:
     - libheif.1.dylib
     - libaom.3.dylib
     - libvmaf.1.dylib
-    - libxjl.0.6.dylib
+    - libjxl.0.6.dylib
     - libde265.0.dylib
     - libx265.199.dylib
     - mautrix-imessage
