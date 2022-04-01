@@ -25,7 +25,8 @@ build amd64:
   script:
   - mkdir mautrix-imessage-amd64
   - go build -ldflags "$GO_LDFLAGS" -o mautrix-imessage-amd64/mautrix-imessage
-  - for line in $LIBRARIES; do
+  - |
+    for line in $LIBRARIES; do
       IFS='/' read dir dylib <<< "${line}"
       install_name_tool -change /usr/local/opt/$dir/lib/$dylib @rpath/$dylib mautrix-imessage-amd64/mautrix-imessage
       cp /usr/local/opt/$dir/lib/$dylib mautrix-imessage-amd64/
@@ -53,7 +54,8 @@ build arm64:
   script:
   - mkdir mautrix-imessage-arm64
   - go build -ldflags "$GO_LDFLAGS" -o mautrix-imessage-arm64/mautrix-imessage
-  - for line in $LIBRARIES; do
+  - |
+    for line in $LIBRARIES; do
       IFS='/' read dir dylib <<< "${line}"
       install_name_tool -change /opt/homebrew/opt/$dir/lib/$dylib @rpath/$dylib mautrix-imessage-arm64/mautrix-imessage
       cp /opt/homebrew/opt/$dir/lib/$dylib mautrix-imessage-arm64/
@@ -115,7 +117,8 @@ build universal:
   - build arm64
   script:
   - lipo -create -output libolm.3.dylib mautrix-imessage-arm64/libolm.3.dylib mautrix-imessage-amd64/libolm.3.dylib
-  - for line in $LIBRARIES; do
+  - |
+    for line in $LIBRARIES; do
       IFS='/' read dir dylib <<< "${line}"
       lipo -create -output $dylib mautrix-imessage-arm64/$dylib mautrix-imessage-amd64/$dylib
     done
