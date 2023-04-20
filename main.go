@@ -22,8 +22,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -583,6 +585,62 @@ func (br *IMBridge) Start() {
 	br.stopPinger = make(chan struct{})
 	if br.Config.Homeserver.WSPingInterval > 0 {
 		go br.serverPinger()
+	}
+	if br.Config.HackyIdentifierResolveServer.Listen != "" {
+		go br.identifierResolveServer()
+	}
+}
+
+func (br *IMBridge) identifierResolveServer() {
+	log := br.ZLog.With().Str("component", "hacky identifier resolution server").Logger()
+	log.Info().Msg("Starting identifier resolution server")
+	err := http.ListenAndServe(br.Config.HackyIdentifierResolveServer.Listen, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			_, _ = w.Write([]byte(`{"error":"invalid http method"}`))
+			return
+		}
+		if br.Config.HackyIdentifierResolveServer.Secret != strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ") {
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":"invalid secret"}`))
+			return
+		}
+		identifier := r.URL.Query().Get("identifier")
+		if identifier == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"error":"missing identifier query parameter"}`))
+			return
+		}
+		if identifier[0] == ' ' {
+			identifier = "+" + identifier[1:]
+		}
+		res, err := br.IM.ResolveIdentifier(identifier)
+		var imessageIdentifier string
+		if strings.HasPrefix(res, "iMessage;-;") {
+			imessageIdentifier = res
+		} else if err == nil {
+			err = errors.New("non-imessage result")
+		}
+		var errStr string
+		if err != nil {
+			errStr = err.Error()
+		}
+		log.Debug().
+			Str("query", identifier).
+			Str("result", res).
+			Err(err).
+			Msg("Resolved identifier")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"identifier": imessageIdentifier,
+			"raw_result": res,
+			"error":      errStr,
+		})
+	}))
+	if err != nil || !errors.Is(err, http.ErrServerClosed) {
+		log.Err(err).Msg("Error in hacky identifier resolution server")
 	}
 }
 

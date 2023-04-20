@@ -41,4 +41,9 @@ type Config struct {
 		Key             string `yaml:"key"`
 		EchoMode        bool   `yaml:"echo_mode"`
 	} `yaml:"hacky_startup_test"`
+
+	HackyIdentifierResolveServer struct {
+		Listen string `yaml:"listen"`
+		Secret string `yaml:"secret"`
+	} `yaml:"hacky_identifier_resolve_server"`
 }

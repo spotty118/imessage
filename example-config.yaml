@@ -100,6 +100,10 @@ hacky_startup_test:
     key: null
     echo_mode: false
 
+hacky_identifier_resolve_server:
+    listen: null
+    secret: null
+
 # Bridge config
 bridge:
     # The user of the bridge.
